@@ -6,7 +6,11 @@ package it.polito.tdp.itunes;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.itunes.model.Adiacenza;
+import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.Model;
+import it.polito.tdp.itunes.model.Track;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -34,10 +38,10 @@ public class FXMLController {
     private Button btnMassimo; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbCanzone"
-    private ComboBox<?> cmbCanzone; // Value injected by FXMLLoader
+    private ComboBox<Track> cmbCanzone; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbGenere"
-    private ComboBox<?> cmbGenere; // Value injected by FXMLLoader
+    private ComboBox<Genre> cmbGenere; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtMemoria"
     private TextField txtMemoria; // Value injected by FXMLLoader
@@ -47,17 +51,32 @@ public class FXMLController {
 
     @FXML
     void btnCreaLista(ActionEvent event) {
-
+      txtResult.clear();
+      txtResult.appendText(model.getPercorso(cmbCanzone.getValue(), Integer.parseInt(txtMemoria.getText())).toString());
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	txtResult.clear();
+     if(cmbGenere.getValue()==null) {
+    	 txtResult.appendText("Seleziona genere");
+    	 return ;
+     }
+     txtResult.appendText(model.creaGrafo(cmbGenere.getValue()));
+     cmbCanzone.getItems().clear();
+     cmbCanzone.getItems().addAll(model.getGrafo().vertexSet());
     }
 
     @FXML
     void doDeltaMassimo(ActionEvent event) {
-    	
+    	txtResult.clear();
+    	if(model.getGrafo()==null) {
+    		txtResult.appendText("Creare il grafo");
+    		return;
+    	}
+    	for(Adiacenza ad:model.getStat()) {
+    		txtResult.appendText(model.getIdMap().get(ad.getId1())+" *** "+model.getIdMap().get(ad.getId2())+" -> "+ad.getPeso());
+    	}
     	
     }
 
@@ -75,6 +94,8 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	cmbGenere.getItems().addAll(model.getGenres());
+    	
     }
 
 }

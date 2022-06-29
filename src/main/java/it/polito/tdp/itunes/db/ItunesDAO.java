@@ -7,6 +7,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import it.polito.tdp.itunes.model.Adiacenza;
 import it.polito.tdp.itunes.model.Album;
 import it.polito.tdp.itunes.model.Artist;
 import it.polito.tdp.itunes.model.Genre;
@@ -76,17 +79,17 @@ public class ItunesDAO {
 		return result;
 	}
 	
-	public List<Track> getAllTracks(){
-		final String sql = "SELECT * FROM Track";
-		List<Track> result = new ArrayList<Track>();
+	public void getAllTracks(Map<Integer, Track> idMap, Genre g){
+		final String sql = "SELECT * FROM Track WHERE GenreId=?";
 		
 		try {
 			Connection conn = DBConnect.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, g.getGenreId());
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				result.add(new Track(res.getInt("TrackId"), res.getString("Name"), 
+				idMap.put(res.getInt("TrackId"),new Track(res.getInt("TrackId"), res.getString("Name"), 
 						res.getString("Composer"), res.getInt("Milliseconds"), 
 						res.getInt("Bytes"),res.getDouble("UnitPrice")));
 			
@@ -96,11 +99,11 @@ public class ItunesDAO {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");
 		}
-		return result;
+		return ;
 	}
 	
 	public List<Genre> getAllGenres(){
-		final String sql = "SELECT * FROM Genre";
+		final String sql = "SELECT * FROM Genre ORDER BY Name";
 		List<Genre> result = new LinkedList<>();
 		
 		try {
@@ -130,6 +133,30 @@ public class ItunesDAO {
 
 			while (res.next()) {
 				result.add(new MediaType(res.getInt("MediaTypeId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Adiacenza> getAllEdges(Genre g){
+		final String sql = "SELECT t1.TrackId, t2.TrackId, ABS(t1.Milliseconds-t2.Milliseconds) as peso "
+				+ "FROM `track` as t1, `track` as t2 "
+				+ "WHERE t1.TrackId>t2.TrackId && t1.MediaTypeId=t2.MediaTypeId && t1.GenreId=? && t2.GenreId=?";
+		List<Adiacenza> result = new LinkedList<Adiacenza>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, g.getGenreId());
+			st.setInt(2, g.getGenreId());
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Adiacenza(res.getInt("t1.TrackId"), res.getInt("t2.TrackId"),res.getInt("peso")));
 			}
 			conn.close();
 		} catch (SQLException e) {
